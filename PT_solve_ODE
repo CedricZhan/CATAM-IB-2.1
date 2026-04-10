@@ -1,0 +1,67 @@
+import numpy as np
+from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+
+def cr3bp(t, z, mu):
+    x, y, u, v = z   
+
+    r1 = np.sqrt((x + 1 - mu)**2 + y**2)
+    r2 = np.sqrt((x - mu)**2 + y**2)
+
+    dOmega_dx = (
+        -mu * (x + 1 - mu)
+        - (1 - mu) * (x - mu)
+        + mu * (x + 1 - mu) / r1**3
+        + (1 - mu) * (x - mu) / r2**3
+    )
+
+    dOmega_dy = (
+        -y
+        + mu * y / r1**3
+        + (1 - mu) * y / r2**3
+    )
+
+    dxdt = u
+    dydt = v
+    dudt = 2 * v - dOmega_dx
+    dvdt = -2 * u - dOmega_dy
+
+    return [dxdt, dydt, dudt, dvdt]
+
+mu = 0.5
+z0 = [0.2, 0.0, 0.0, -0.50]   
+t_span = (0.0, 15.0)
+
+t_eval = np.linspace(t_span[0], t_span[1], 5000)
+
+sol = solve_ivp(
+    cr3bp,
+    t_span,
+    z0,
+    args=(mu,),
+    method="RK45",
+    t_eval=t_eval,
+    rtol=1e-9,
+    atol=1e-12
+)
+
+print("success:", sol.success)
+print("message:", sol.message)
+
+x = sol.y[0]
+y = sol.y[1]
+u = sol.y[2]
+v = sol.y[3]
+
+plt.figure(figsize=(6, 6))
+plt.plot(x, y, lw=1)
+plt.scatter(-1 + mu, 0, c='red', label='body 1')
+plt.scatter(mu, 0, c='blue', label='body 2')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.axis('equal')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
