@@ -28,8 +28,22 @@ def cr3bp(t, z, mu):
 
     return [dxdt, dydt, dudt, dvdt]
 
-mu = 0.5
-z0 = [0.2, 0.0, 0.0, -0.50]   
+def Omega(x, y, mu):
+    r1 = np.sqrt((x + 1 - mu)**2 + y**2)
+    r2 = np.sqrt((x - mu)**2 + y**2)
+
+    return (
+        -0.5 * mu * r1**2
+        -0.5 * (1 - mu) * r2**2
+        - mu / r1
+        - (1 - mu) / r2
+    )
+
+def J_constant(x, y, u, v, mu):
+    return 0.5 * u**2 + 0.5 * v**2 + Omega(x, y, mu)
+
+mu = 0.1
+z0 = [0.5, 0.0, 0.0, 0.8]   
 t_span = (0.0, 15.0)
 
 t_eval = np.linspace(t_span[0], t_span[1], 5000)
@@ -53,6 +67,13 @@ y = sol.y[1]
 u = sol.y[2]
 v = sol.y[3]
 
+J = J_constant(x, y, u, v, mu)
+J0 = J[0]
+
+print("J(0) =", J0)
+print("max |J(t)-J(0)| =", np.max(np.abs(J - J0)))
+print("relative error =", np.max(np.abs(J - J0)) / max(1, abs(J0)))
+
 plt.figure(figsize=(6, 6))
 plt.plot(x, y, lw=1)
 plt.scatter(-1 + mu, 0, c='red', label='body 1')
@@ -64,4 +85,9 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-
+plt.figure(figsize=(6, 4))
+plt.plot(sol.t, J - J0)
+plt.xlabel("t")
+plt.ylabel(r"$J(t)-J(0)$")
+plt.grid(True)
+plt.show()
